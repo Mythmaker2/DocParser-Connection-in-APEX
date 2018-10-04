@@ -1,0 +1,27 @@
+@isTest
+global class DocParserApiMock implements HttpCalloutMock {
+    
+    global HTTPResponse respond (HTTPRequest request){
+    
+        //System.assertEquals('https://api.docparser.com/v1/document/upload/XXXXX?remote_id=null', request.getEndpoint());
+        System.assertEquals('POST', request.getMethod());
+        
+        
+        HttpResponse response = new HttpResponse();
+        response.setHeader('Content-Type', 'application/json');
+        
+        JSONGenerator gen = JSON.createGenerator(true);
+        
+        gen.writeStartObject();
+        gen.writeStringField('id','05616gt83sscf8eUAE');
+        gen.writeEndObject();
+        
+        string json = gen.getAsString();
+        
+        system.debug(json);
+
+		response.setBody(json);
+        response.setStatusCode(200);
+        return response;
+    }
+}
