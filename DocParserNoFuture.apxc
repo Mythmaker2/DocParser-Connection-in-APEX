@@ -1,0 +1,586 @@
+public class DocParserNoFuture {
+    
+
+    public static Integer TriggerCallDocParserApi(string parentId, string typObject, integer process){
+        
+        
+        process = 0;
+        system.debug('Je suis passé par là - Trigger DocParser');
+        
+        if(parentId.contains('.')){
+            parentId = parentId.replace('.','');
+        }
+        
+        List<Attachment> attachments = [SELECT Id, Name, Body, Description FROM Attachment where parentId =: parentId ORDER BY CreatedDate ASC LIMIT 10];
+        
+        system.debug('attachments dans DocParser : ' +attachments);
+        
+        
+        if(typObject == '1'){
+            for(attachment attach : attachments){
+                
+            if(attach.body.size() <=0 ){
+                system.debug('Ya un probleme');
+                process = 1;
+            }
+            
+            system.debug(attach.name);    
+                
+            blob file = attach.body; 
+            
+            string strApiKey = 'XXXXXXXXX';
+            string strSeparationKey = 'A_RANDOM_STRING';
+            string parser_ID = 'XXXXXXXX';
+            string fileName = parentId; 			// A CHANGER
+            //'Content-type','text/octet-stream' 
+            
+            String strTargetURL = 'https://api.docparser.com/v1/document/upload/' + parser_ID +'?remote_id='+attach.Description;        
+            
+            String strHeader = '--' + strSeparationKey + '\nContent-Disposition: form-data; name="file"; filename="' + fileName + '"\nContent-Type: application/octet-stream\n\n';
+            String strBody = EncodingUtil.base64Encode(file);
+            String strFooter = '\n--' + strSeparationKey + '--';
+            String bodyPayloadIntermediate = strHeader + strFooter;
+            
+            if(bodyPayloadIntermediate.length() + strBody.length() >= 6000000){
+                    system.debug('probleme --> Fichier trop lourd');
+                	process = 3;
+                	return process;
+            }     
+            string bodyPayload = strHeader + strBody + strFooter;
+            
+            String strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            while(strHeaderEncoded.endsWith('=')) {
+                strHeader+=' ';
+                strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            }
+                
+            String strBodyEncoded = strBody; 
+            String strFooterEncoded = EncodingUtil.base64Encode(Blob.valueOf(strFooter));
+    
+            Blob blobBody = null;
+            String last4Bytes = strBodyEncoded.substring(strBodyEncoded.length()-4,strBodyEncoded.length());
+    
+            if(last4Bytes.endsWith('=')) {
+                Blob decoded4Bytes = EncodingUtil.base64Decode(last4Bytes);
+                HttpRequest objHttpRequest = New HttpRequest();
+                objHttpRequest.setBodyAsBlob(decoded4Bytes);
+                String last4BytesFooter = objHttpRequest.getBody()+strFooter;
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded.substring(0,strBodyEncoded.length()-4)+EncodingUtil.base64Encode(Blob.valueOf(last4BytesFooter)));
+            } else {
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded+strFooterEncoded);
+            }
+    
+            if(blobBody.size()>8000000) {
+                // throw new CustomException('File size limit is 3 MBytes');
+                system.debug('File size limit is 8 MBytes');
+                process = 1;
+            }else{
+                system.debug('blobBody.size()'+blobBody.size());
+            } 
+    
+                
+                
+                try{    
+            // send out the request
+            HttpRequest req = New HttpRequest();
+            req.setHeader('Content-Type', 'multipart/form-data; boundary=' + strSeparationKey);
+            req.setHeader('Authorization', 'Basic ' + strApiKey);
+            req.setMethod('POST');
+            req.setEndpoint(strTargetURL);
+            req.setBodyAsBlob(blobBody);
+            req.setHeader('Content-Length', String.valueof(req.getBodyAsBlob().size()));
+            Http http = New Http();
+            HTTPResponse res = http.send(req);
+            string response = res.getBody();       
+            system.debug('response Docparser : '+ response);
+                    
+            if(response.contains('error') == TRUE){
+                system.debug('Une erreur s\'est produite sur DocParser -1ere fois');
+                process = 2;            
+            }
+    
+                }// try requete http
+                catch(exception e){
+                    system.debug('Un erreur est survenue lors de l\'envoi à DocParser -1ere fois : ' + e.getMessage());
+                    process = 1;
+                }
+            } // fin for attachment
+        } // FIN TYPOBJECT == 1
+        
+        
+        
+		if(typObject == '2'){
+            for(attachment attach : attachments){
+                
+            if(attach.body.size() <=0 ){
+                system.debug('Ya un probleme');
+                process = 1;
+            }
+            
+            system.debug(attach.name);    
+                
+            blob file = attach.body; 
+            
+            string strApiKey = 'XXXXXXX';
+            string strSeparationKey = 'A_RANDOM_STRING';
+            string parser_ID = 'XXXXXX';
+            string fileName = parentId; 			// A CHANGER
+            //'Content-type','text/octet-stream' 
+            
+            String strTargetURL = 'https://api.docparser.com/v1/document/upload/' + parser_ID +'?remote_id='+attach.Description;        
+            
+            String strHeader = '--' + strSeparationKey + '\nContent-Disposition: form-data; name="file"; filename="' + fileName + '"\nContent-Type: application/octet-stream\n\n';
+            String strBody = EncodingUtil.base64Encode(file);
+            String strFooter = '\n--' + strSeparationKey + '--';
+            String bodyPayloadIntermediate = strHeader + strFooter;
+            
+            if(bodyPayloadIntermediate.length() + strBody.length() >= 6000000){
+                    system.debug('probleme --> Fichier trop lourd');
+                	process = 3;
+                	return process;
+            }      
+            string bodyPayload = strHeader + strBody + strFooter;
+            
+            String strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            while(strHeaderEncoded.endsWith('=')) {
+                strHeader+=' ';
+                strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            }
+                
+            String strBodyEncoded = strBody; 
+            String strFooterEncoded = EncodingUtil.base64Encode(Blob.valueOf(strFooter));
+    
+            Blob blobBody = null;
+            String last4Bytes = strBodyEncoded.substring(strBodyEncoded.length()-4,strBodyEncoded.length());
+    
+            if(last4Bytes.endsWith('=')) {
+                Blob decoded4Bytes = EncodingUtil.base64Decode(last4Bytes);
+                HttpRequest objHttpRequest = New HttpRequest();
+                objHttpRequest.setBodyAsBlob(decoded4Bytes);
+                String last4BytesFooter = objHttpRequest.getBody()+strFooter;
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded.substring(0,strBodyEncoded.length()-4)+EncodingUtil.base64Encode(Blob.valueOf(last4BytesFooter)));
+            } else {
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded+strFooterEncoded);
+            }
+    
+            if(blobBody.size()>8000000) {
+                // throw new CustomException('File size limit is 3 MBytes');
+                system.debug('File size limit is 8 MBytes');
+                process = 1;
+            }else{
+                system.debug('blobBody.size()'+blobBody.size());
+            } 
+    
+                
+                
+                try{    
+            // send out the request
+            HttpRequest req = New HttpRequest();
+            req.setHeader('Content-Type', 'multipart/form-data; boundary=' + strSeparationKey);
+            req.setHeader('Authorization', 'Basic ' + strApiKey);
+            req.setMethod('POST');
+            req.setEndpoint(strTargetURL);
+            req.setBodyAsBlob(blobBody);
+            req.setHeader('Content-Length', String.valueof(req.getBodyAsBlob().size()));
+            Http http = New Http();
+            HTTPResponse res = http.send(req);
+            string response = res.getBody();       
+            system.debug('response DocParser : '+ response);
+                    
+            if(response.contains('error') == TRUE){
+                system.debug('Une erreur s\'est produite sur DocParser -1ere fois');
+                process = 2;            
+            }
+    
+                }// try requete http
+                catch(exception e){
+                    system.debug('Un erreur est survenue lors de l\'envoi à DocParser -1ere fois : ' + e.getMessage());
+                    process = 1;
+                }
+            } // fin for attachment
+        } // FIN TYPOBJECT == 2       
+        
+        
+   
+ 		if(typObject == '3'){
+            for(attachment attach : attachments){
+                
+            if(attach.body.size() <=0 ){
+                system.debug('Ya un probleme');
+                process = 1;
+            }
+            
+            system.debug(attach.name);    
+                
+            blob file = attach.body; 
+            
+            string strApiKey = 'XXXXXXX';
+            string strSeparationKey = 'A_RANDOM_STRING';
+            string parser_ID = 'XXXXXXXX';
+            string fileName = parentId; 			// A CHANGER
+            //'Content-type','text/octet-stream' 
+            
+            String strTargetURL = 'https://api.docparser.com/v1/document/upload/' + parser_ID +'?remote_id='+attach.Description;        
+            
+            String strHeader = '--' + strSeparationKey + '\nContent-Disposition: form-data; name="file"; filename="' + fileName + '"\nContent-Type: application/octet-stream\n\n';
+            String strBody = EncodingUtil.base64Encode(file);
+            String strFooter = '\n--' + strSeparationKey + '--';
+            String bodyPayloadIntermediate = strHeader + strFooter;
+            
+            if(bodyPayloadIntermediate.length() + strBody.length() >= 6000000){
+                    system.debug('probleme --> Fichier trop lourd');
+                	process = 3;
+                	return process;
+            }  
+            string bodyPayload = strHeader + strBody + strFooter;
+            
+            String strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            while(strHeaderEncoded.endsWith('=')) {
+                strHeader+=' ';
+                strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            }
+                
+            String strBodyEncoded = strBody; 
+            String strFooterEncoded = EncodingUtil.base64Encode(Blob.valueOf(strFooter));
+    
+            Blob blobBody = null;
+            String last4Bytes = strBodyEncoded.substring(strBodyEncoded.length()-4,strBodyEncoded.length());
+    
+            if(last4Bytes.endsWith('=')) {
+                Blob decoded4Bytes = EncodingUtil.base64Decode(last4Bytes);
+                HttpRequest objHttpRequest = New HttpRequest();
+                objHttpRequest.setBodyAsBlob(decoded4Bytes);
+                String last4BytesFooter = objHttpRequest.getBody()+strFooter;
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded.substring(0,strBodyEncoded.length()-4)+EncodingUtil.base64Encode(Blob.valueOf(last4BytesFooter)));
+            } else {
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded+strFooterEncoded);
+            }
+    
+            if(blobBody.size()>8000000) {
+                // throw new CustomException('File size limit is 3 MBytes');
+                system.debug('File size limit is 8 MBytes');
+                process = 1;
+            }else{
+                system.debug('blobBody.size()'+blobBody.size());
+            } 
+    
+                
+                
+                try{    
+            // send out the request
+            HttpRequest req = New HttpRequest();
+            req.setHeader('Content-Type', 'multipart/form-data; boundary=' + strSeparationKey);
+            req.setHeader('Authorization', 'Basic ' + strApiKey);
+            req.setMethod('POST');
+            req.setEndpoint(strTargetURL);
+            req.setBodyAsBlob(blobBody);
+            req.setHeader('Content-Length', String.valueof(req.getBodyAsBlob().size()));
+            Http http = New Http();
+            HTTPResponse res = http.send(req);
+            string response = res.getBody();       
+            system.debug('response DocParser : '+ response);
+                    
+            if(response.contains('error') == TRUE){
+                system.debug('Une erreur s\'est produite sur DocParser -1ere fois');
+                process = 2;            
+            }
+    
+                }// try requete http
+                catch(exception e){
+                    system.debug('Un erreur est survenue lors de l\'envoi à DocParser -1ere fois : ' + e.getMessage());
+                    process = 1;
+                }
+            } // fin for attachment
+        } // FIN TYPOBJECT == 3        
+        
+        
+        return process;
+	}	 // FIN FONCTION    
+    
+    
+    
+    
+    
+    public static Integer DocParserCutVersion(List<string> cutPDFs, string parentId, string typObject, integer process){
+        
+        system.debug('Je suis passé par là - DocParserCutVersion');
+        integer i = 0;
+        process = 0;
+        
+        if(parentId.contains('.')){
+            parentId = parentId.replace('.','');
+        }
+       
+        List<blob> blobList = new List<blob>();
+		
+        while(i < cutPDFs.size()){
+            bloblist.add(EncodingUtil.base64Decode(cutPDFs[i]));
+            bloblist.add(EncodingUtil.base64Decode('a'));
+            i = i+2;
+        }
+      
+       	i = 0;
+        if(typObject == '1'){
+            while(i < bloblist.size()){
+                
+                if(bloblist[i].size() <= 0){
+                    system.debug('Il y a un PB (blob vide)');
+                    process = 3;
+                }
+                    
+            string strApiKey = 'XXXXXXX';
+            string strSeparationKey = 'A_RANDOM_STRING';
+            string parser_ID = 'XXXXXX';
+            string fileName = parentId; 
+                
+            String strTargetURL = 'https://api.docparser.com/v1/document/upload/' + parser_ID +'?remote_id='+cutPDFs[i+1];        
+            
+            String strHeader = '--' + strSeparationKey + '\nContent-Disposition: form-data; name="file"; filename="' + fileName + '"\nContent-Type: application/octet-stream\n\n';
+            String strBody = EncodingUtil.base64Encode(bloblist[i]);
+            String strFooter = '\n--' + strSeparationKey + '--';
+            String bodyPayloadIntermediate = strHeader + strFooter;
+            
+            if(bodyPayloadIntermediate.length() + strBody.length() >= 6000000){
+                    system.debug('probleme --> Fichier trop lourd');
+                	process = 3;
+                	return process;
+            }  
+            string bodyPayload = strHeader + strBody + strFooter;    
+                
+                
+            String strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            while(strHeaderEncoded.endsWith('=')) {
+                strHeader+=' ';
+                strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            }
+                
+            String strBodyEncoded = strBody; 
+            String strFooterEncoded = EncodingUtil.base64Encode(Blob.valueOf(strFooter));
+    
+            Blob blobBody = null;
+            String last4Bytes = strBodyEncoded.substring(strBodyEncoded.length()-4,strBodyEncoded.length());
+    
+            if(last4Bytes.endsWith('=')) {
+                Blob decoded4Bytes = EncodingUtil.base64Decode(last4Bytes);
+                HttpRequest objHttpRequest = New HttpRequest();
+                objHttpRequest.setBodyAsBlob(decoded4Bytes);
+                String last4BytesFooter = objHttpRequest.getBody()+strFooter;
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded.substring(0,strBodyEncoded.length()-4)+EncodingUtil.base64Encode(Blob.valueOf(last4BytesFooter)));
+            } else {
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded+strFooterEncoded);
+            }
+    
+            if(blobBody.size()>8000000) {
+                // throw new CustomException('File size limit is 3 MBytes');
+                system.debug('File size limit is 8 MBytes');
+                process = 1;
+            }else{
+                system.debug('blobBody.size()'+blobBody.size());
+            }  
+                
+                
+            try{    
+            // send out the request
+            HttpRequest req = New HttpRequest();
+            req.setHeader('Content-Type', 'multipart/form-data; boundary=' + strSeparationKey);
+            req.setHeader('Authorization', 'Basic ' + strApiKey);
+            req.setMethod('POST');
+            req.setEndpoint(strTargetURL);
+            req.setBodyAsBlob(blobBody);
+            req.setHeader('Content-Length', String.valueof(req.getBodyAsBlob().size()));
+            Http http = New Http();
+            HTTPResponse res = http.send(req);
+            string response = res.getBody();       
+            system.debug('response DocParser : '+ response);
+                    
+            if(response.contains('error') == TRUE){
+                system.debug('Une erreur s\'est produite sur DocParser -2eme fois');
+                process = 3;            
+            }
+                }// try requete http
+                catch(exception e){
+                    system.debug('Un erreur est survenue lors de l\'envoi à DocParser -2eme fois : ' + e.getMessage());
+                    process = 3;
+                }    
+                i = i+2;
+            } // FIN WHILE BLOB
+        } // FINIF TYPOBJECT == 1 
+        
+
+        else if(typObject == '2'){
+            while(i < bloblist.size()){
+                
+                if(bloblist[i].size() <= 0){
+                    system.debug('Il y a un PB (blob vide)');
+                    process = 3;
+                }
+                    
+            string strApiKey = 'XXXXXX';
+            string strSeparationKey = 'A_RANDOM_STRING';
+            string parser_ID = 'XXXXXXX';
+            string fileName = parentId; 
+                
+            String strTargetURL = 'https://api.docparser.com/v1/document/upload/' + parser_ID +'?remote_id='+cutPDFs[i+1];        
+            
+            String strHeader = '--' + strSeparationKey + '\nContent-Disposition: form-data; name="file"; filename="' + fileName + '"\nContent-Type: application/octet-stream\n\n';
+            String strBody = EncodingUtil.base64Encode(bloblist[i]);
+            String strFooter = '\n--' + strSeparationKey + '--';
+            String bodyPayloadIntermediate = strHeader + strFooter;
+            
+            if(bodyPayloadIntermediate.length() + strBody.length() >= 6000000){
+                    system.debug('probleme --> Fichier trop lourd');
+                	process = 3;
+                	return process;
+            }  
+            string bodyPayload = strHeader + strBody + strFooter;    
+                
+                
+            String strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            while(strHeaderEncoded.endsWith('=')) {
+                strHeader+=' ';
+                strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            }
+                
+            String strBodyEncoded = strBody; 
+            String strFooterEncoded = EncodingUtil.base64Encode(Blob.valueOf(strFooter));
+    
+            Blob blobBody = null;
+            String last4Bytes = strBodyEncoded.substring(strBodyEncoded.length()-4,strBodyEncoded.length());
+    
+            if(last4Bytes.endsWith('=')) {
+                Blob decoded4Bytes = EncodingUtil.base64Decode(last4Bytes);
+                HttpRequest objHttpRequest = New HttpRequest();
+                objHttpRequest.setBodyAsBlob(decoded4Bytes);
+                String last4BytesFooter = objHttpRequest.getBody()+strFooter;
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded.substring(0,strBodyEncoded.length()-4)+EncodingUtil.base64Encode(Blob.valueOf(last4BytesFooter)));
+            } else {
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded+strFooterEncoded);
+            }
+    
+            if(blobBody.size()>8000000) {
+                // throw new CustomException('File size limit is 3 MBytes');
+                system.debug('File size limit is 8 MBytes');
+                process = 1;
+            }else{
+                system.debug('blobBody.size()'+blobBody.size());
+            }     
+                
+                
+            try{    
+            // send out the request
+            HttpRequest req = New HttpRequest();
+            req.setHeader('Content-Type', 'multipart/form-data; boundary=' + strSeparationKey);
+            req.setHeader('Authorization', 'Basic ' + strApiKey);
+            req.setMethod('POST');
+            req.setEndpoint(strTargetURL);
+            req.setBodyAsBlob(blobBody);
+            req.setHeader('Content-Length', String.valueof(req.getBodyAsBlob().size()));
+            Http http = New Http();
+            HTTPResponse res = http.send(req);
+            string response = res.getBody();       
+            system.debug('response DocParser : '+ response);
+                    
+            if(response.contains('error') == TRUE){
+                system.debug('Une erreur s\'est produite sur DocParser -2eme fois');
+                process = 3;            
+            }
+                }// try requete http
+                catch(exception e){
+                    system.debug('Un erreur est survenue lors de l\'envoi à DocParser -2eme fois : ' + e.getMessage());
+                    process = 3;
+                }    
+                i = i+2;
+            } // FIN WHILE BLOB
+        } // FINIF TYPOBJECT == 2     
+        
+        
+     
+        else if(typObject == '3'){
+            while(i < bloblist.size()){
+                
+                if(bloblist[i].size() <= 0){
+                    system.debug('Il y a un PB (blob vide)');
+                    process = 3;
+                }
+                    
+            string strApiKey = 'XXXXXX';
+            string strSeparationKey = 'A_RANDOM_STRING';
+            string parser_ID = 'XXXXX';
+            string fileName = parentId; 
+                
+            String strTargetURL = 'https://api.docparser.com/v1/document/upload/' + parser_ID +'?remote_id='+cutPDFs[i+1];        
+            
+            String strHeader = '--' + strSeparationKey + '\nContent-Disposition: form-data; name="file"; filename="' + fileName + '"\nContent-Type: application/octet-stream\n\n';
+            String strBody = EncodingUtil.base64Encode(bloblist[i]);
+            String strFooter = '\n--' + strSeparationKey + '--';
+            String bodyPayloadIntermediate = strHeader + strFooter;
+            
+            if(bodyPayloadIntermediate.length() + strBody.length() >= 6000000){
+                    system.debug('probleme --> Fichier trop lourd');
+                	process = 3;
+                	return process;
+            }  
+            string bodyPayload = strHeader + strBody + strFooter;    
+                
+                
+            String strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            while(strHeaderEncoded.endsWith('=')) {
+                strHeader+=' ';
+                strHeaderEncoded = EncodingUtil.base64Encode(Blob.valueOf(strHeader+'\n'));
+            }
+                
+            String strBodyEncoded = strBody; 
+            String strFooterEncoded = EncodingUtil.base64Encode(Blob.valueOf(strFooter));
+    
+            Blob blobBody = null;
+            String last4Bytes = strBodyEncoded.substring(strBodyEncoded.length()-4,strBodyEncoded.length());
+    
+            if(last4Bytes.endsWith('=')) {
+                Blob decoded4Bytes = EncodingUtil.base64Decode(last4Bytes);
+                HttpRequest objHttpRequest = New HttpRequest();
+                objHttpRequest.setBodyAsBlob(decoded4Bytes);
+                String last4BytesFooter = objHttpRequest.getBody()+strFooter;
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded.substring(0,strBodyEncoded.length()-4)+EncodingUtil.base64Encode(Blob.valueOf(last4BytesFooter)));
+            } else {
+                blobBody = EncodingUtil.base64Decode(strHeaderEncoded+strBodyEncoded+strFooterEncoded);
+            }
+    
+            if(blobBody.size()>8000000) {
+                // throw new CustomException('File size limit is 3 MBytes');
+                system.debug('File size limit is 8 MBytes');
+                process = 1;
+            }else{
+                system.debug('blobBody.size()'+blobBody.size());
+            }   
+                
+                
+            try{    
+            // send out the request
+            HttpRequest req = New HttpRequest();
+            req.setHeader('Content-Type', 'multipart/form-data; boundary=' + strSeparationKey);
+            req.setHeader('Authorization', 'Basic ' + strApiKey);
+            req.setMethod('POST');
+            req.setEndpoint(strTargetURL);
+            req.setBodyAsBlob(blobBody);
+            req.setHeader('Content-Length', String.valueof(req.getBodyAsBlob().size()));
+            Http http = New Http();
+            HTTPResponse res = http.send(req);
+            string response = res.getBody();       
+            system.debug('response DocParser : '+ response);
+                    
+            if(response.contains('error') == TRUE){
+                system.debug('Une erreur s\'est produite sur DocParser -2eme fois');
+                process = 3;            
+            }
+                }// try requete http
+                catch(exception e){
+                    system.debug('Un erreur est survenue lors de l\'envoi à DocParser -2eme fois : ' + e.getMessage());
+                    process = 3;
+                }    
+                i = i+2;
+            } // FIN WHILE BLOB
+        } // FINIF TYPOBJECT == 3       
+        
+        return process;
+    } // FIN FONCTION
+}
