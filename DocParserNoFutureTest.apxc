@@ -1,0 +1,241 @@
+@isTest
+private class TestDocParserApi {
+    
+    @isTest static void TriggerDocParserTestTypObject1(){
+        
+        Test.setMock(HttpcalloutMock.class, new DocParserApiMock());
+        
+        Lead newLead = new Lead(Email = 'XXXXXXX', Civilit__c = 'Monsieur', Mail__c = 'XXXXXXXX', LastName = 'XXXXX', SIREN__c = 'XXXX', Status = 'XXXXX', Company ='XXXXX' );
+		try{
+    	insert newLead;
+    	system.debug('Ok');
+		} catch (Exception e){
+    	system.debug('error');
+		}
+        
+        Lead piste = [SELECT Id FROM Lead where LastName = 'XXXX' and SIREN__c = 'XXXXX' and Company = 'XXXXX' LIMIT 1];
+        
+        Attachment attach = new Attachment();
+        
+        attach.name = 'Test.pdf';
+        attach.body = EncodingUtil.base64Decode('Bonjour');
+        attach.Description = 'null';
+        attach.parentId = piste.Id;
+        
+        try{
+    	insert attach;
+    	system.debug('Ok');
+		} catch (Exception d){
+    	system.debug('error');
+		}
+        integer process = 0;
+        string typObject = '1';
+        Test.startTest();
+        DocParserNoFuture.TriggerCallDocParserApi(piste.Id, typObject, process);
+        Test.stopTest();
+        
+    } 
+    
+    @isTest static void TriggerDocParserTestTypObject2(){
+        
+        Test.setMock(HttpcalloutMock.class, new DocParserApiMock());
+        
+        Lead newLead = new Lead(Email = 'XXXXX', Civilit__c = 'Monsieur', Mail__c = 'XXXXX', LastName = 'XXXXX', SIREN__c = 'XXXX', Status = 'XXXX', Company ='XXXX' );
+		try{
+    	insert newLead;
+    	system.debug('Ok');
+		} catch (Exception e){
+    	system.debug('error');
+		}
+        
+        Lead piste = [SELECT Id FROM Lead where LastName = 'XXXXX' and SIREN__c = 'XXXXXX' and Company = 'XXXXX' LIMIT 1];
+        
+        Attachment attach = new Attachment();
+        
+        attach.name = 'Test.pdf';
+        attach.body = EncodingUtil.base64Decode('Bonjour');
+        attach.Description = 'null';
+        attach.parentId = piste.Id;
+        
+        try{
+    	insert attach;
+    	system.debug('Ok');
+		} catch (Exception d){
+    	system.debug('error');
+		}
+        integer process = 0;
+        string typObject = '2';
+        Test.startTest();
+        DocParserNoFuture.TriggerCallDocParserApi(piste.Id, typObject, process);
+        Test.stopTest();
+        
+    } 
+
+
+    @isTest static void TriggerDocParserTestTypObject3(){
+        
+        Test.setMock(HttpcalloutMock.class, new DocParserApiMock());
+        
+        Lead newLead = new Lead(Email = 'XXXXXX', Civilit__c = 'Monsieur', Mail__c = 'XXXXX', LastName = 'XXXXXX', SIREN__c = 'XXXXX', Status = 'XXXXXXX', Company ='XXXXX' );
+		try{
+    	insert newLead;
+    	system.debug('Ok');
+		} catch (Exception e){
+    	system.debug('error');
+		}
+        
+        Lead piste = [SELECT Id FROM Lead where LastName = 'XXXXXX' and SIREN__c = 'XXXXX' and Company = 'XXXXX' LIMIT 1];
+        
+        Attachment attach = new Attachment();
+        
+        attach.name = 'Test.pdf';
+        attach.body = EncodingUtil.base64Decode('Bonjour');
+        attach.Description = 'null';
+        attach.parentId = piste.Id;
+        
+        try{
+    	insert attach;
+    	system.debug('Ok');
+		} catch (Exception d){
+    	system.debug('error');
+		}
+        integer process = 0;
+        string typObject = '3';
+        Test.startTest();
+        DocParserNoFuture.TriggerCallDocParserApi(piste.Id, typObject, process);
+        Test.stopTest();
+        
+    }     
+    
+    
+    
+    
+    @isTest static void DocParserCutVersionTestTypObject1(){
+        
+        Test.setMock(HttpcalloutMock.class, new DocParserApiMock());
+        
+        Lead newLead = new Lead(Email = 'XXXXX', Civilit__c = 'Monsieur', Mail__c = 'XXXXX', LastName = 'XXXXXX', SIREN__c = 'XXXXX', Status = 'XXXXX', Company ='XXXXX' );
+		try{
+    	insert newLead;
+    	system.debug('Ok');
+		} catch (Exception e){
+    	system.debug('error');
+		}
+        
+        Lead piste = [SELECT Id FROM Lead where LastName = 'XXXXX' and SIREN__c = 'XXXXXX' and Company = 'XXXXX' LIMIT 1];
+        
+        Attachment attach = new Attachment();
+        
+        attach.name = 'Test.pdf';
+        attach.body = EncodingUtil.base64Decode('Bonjour');
+        attach.Description = 'null';
+        attach.parentId = piste.Id;
+        
+        try{
+    	insert attach;
+    	system.debug('Ok');
+		} catch (Exception d){
+    	system.debug('error');
+		}
+        
+        List<string> pdfAsString = new List<string>();
+        
+        pdfAsString.add(EncodingUtil.base64Encode(attach.body));
+        pdfAsString.add(attach.Description);
+        
+        integer process = 0;
+        string typObject = '1';
+        
+        Test.startTest();
+        DocParserNoFuture.DocParserCutVersion(pdfAsString, piste.Id, typObject, process);
+        Test.stopTest();
+        
+    }     
+    
+    
+    @isTest static void DocParserCutVersionTestTypObject2(){
+        
+        Test.setMock(HttpcalloutMock.class, new DocParserApiMock());
+        
+        Lead newLead = new Lead(Email = 'XXXXXX', Civilit__c = 'Monsieur', Mail__c = 'XXXXXX', LastName = 'XXXXX', SIREN__c = 'XXXXX', Status = 'XXXXX', Company ='XXXXX' );
+		try{
+    	insert newLead;
+    	system.debug('Ok');
+		} catch (Exception e){
+    	system.debug('error');
+		}
+        
+        Lead piste = [SELECT Id FROM Lead where LastName = 'XXXXX' and SIREN__c = 'XXXXXX' and Company = 'XXXXXX' LIMIT 1];
+        
+        Attachment attach = new Attachment();
+        
+        attach.name = 'Test.pdf';
+        attach.body = EncodingUtil.base64Decode('Bonjour');
+        attach.Description = 'null';
+        attach.parentId = piste.Id;
+        
+        try{
+    	insert attach;
+    	system.debug('Ok');
+		} catch (Exception d){
+    	system.debug('error');
+		}
+        
+        List<string> pdfAsString = new List<string>();
+        
+        pdfAsString.add(EncodingUtil.base64Encode(attach.body));
+        pdfAsString.add(attach.Description);
+        
+        integer process = 0;
+        string typObject = '2';
+        
+        Test.startTest();
+        DocParserNoFuture.DocParserCutVersion(pdfAsString, piste.Id, typObject, process);
+        Test.stopTest();
+        
+    }  
+    
+    
+    @isTest static void DocParserCutVersionTestTypObject3(){
+        
+        Test.setMock(HttpcalloutMock.class, new DocParserApiMock());
+        
+        Lead newLead = new Lead(Email = 'XXXXXX', Civilit__c = 'Monsieur', Mail__c = 'XXXXXX', LastName = 'XXXXX', SIREN__c = 'XXXX', Status = 'XXXXXX', Company ='XXXX' );
+		try{
+    	insert newLead;
+    	system.debug('Ok');
+		} catch (Exception e){
+    	system.debug('error');
+		}
+        
+        Lead piste = [SELECT Id FROM Lead where LastName = 'XXXX' and SIREN__c = 'XXXXX' and Company = 'XXXX' LIMIT 1];
+        
+        Attachment attach = new Attachment();
+        
+        attach.name = 'Test.pdf';
+        attach.body = EncodingUtil.base64Decode('Bonjour');
+        attach.Description = 'null';
+        attach.parentId = piste.Id;
+        
+        try{
+    	insert attach;
+    	system.debug('Ok');
+		} catch (Exception d){
+    	system.debug('error');
+		}
+        
+        List<string> pdfAsString = new List<string>();
+        
+        pdfAsString.add(EncodingUtil.base64Encode(attach.body));
+        pdfAsString.add(attach.Description);
+        
+        integer process = 0;
+        string typObject = '3';
+        
+        Test.startTest();
+        DocParserNoFuture.DocParserCutVersion(pdfAsString, piste.Id, typObject, process);
+        Test.stopTest();
+        
+    }     
+
+}
